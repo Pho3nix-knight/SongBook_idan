@@ -329,7 +329,13 @@ def hybrid_search(
     init_hybrid_if_needed()
     assert _BM25_GLOBAL is not None and _VDB_GLOBAL is not None
 
-    fdict = _build_filter_dict(...)
+    fdict = _build_filter_dict(
+        month_year=month_year,
+        hebrew_month_name=hebrew_month_name,
+        song_name=song_name,
+        has_chorus=has_chorus,
+        has_monologue=has_monologue,
+    )
     q_toks = _tokens(query)
     raw_k = max(k, 30)
 
