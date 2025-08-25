@@ -1,5 +1,6 @@
 
 from typing import List, Any
+import re
 
 from helpers.hybride_retreval import hybrid_search
 from core.llm import get_llm
@@ -41,11 +42,50 @@ def _format_docs(docs: List[Any]) -> str:
         parts.append(f"[{i}] {src}\n{content}")
     return "\n\n".join(parts)
 
+
+_QUOTE_RX = re.compile(r"[\"'“”‚‘’׳״](.+?)[\"'“”‚‘’׳״]")
+_SHIR_RX = re.compile(r"\bשיר(?:\s+[\w\u0590-\u05FF]+){1,3}")
+
+
+def _extract_song_names(question: str) -> List[str]:
+    """Extract possible song titles from the question.
+
+    Looks for quoted phrases and simple "שיר ..." patterns.
+    Returns a list of unique candidates preserving order.
+    """
+    names: List[str] = []
+    names.extend(m.strip() for m in _QUOTE_RX.findall(question))
+    names.extend(m.strip() for m in _SHIR_RX.findall(question))
+
+    seen = []
+    for n in names:
+        if n and n not in seen:
+            seen.append(n)
+    return seen
+
 def summarize_rag(question: str, top_k: int = DEFAULT_TOP_K) -> dict:
     """
     Returns a dict: { 'answer': str, 'contexts': List[str], 'raw_docs': List[Document-like] }
     """
-    docs = hybrid_search(question, k=top_k)
+    song_names = _extract_song_names(question)
+
+    docs: List[Any] = []
+    if song_names:
+        for name in song_names:
+            docs.extend(hybrid_search(question, k=top_k, song_name=name))
+
+        # Deduplicate while preserving order
+        seen_keys = set()
+        deduped: List[Any] = []
+        for d in docs:
+            md = getattr(d, "metadata", {}) or {}
+            key = md.get("song_id") or md.get("song_name") or id(d)
+            if key not in seen_keys:
+                seen_keys.add(key)
+                deduped.append(d)
+        docs = deduped[:top_k]
+    else:
+        docs = hybrid_search(question, k=top_k)
 
     context_str = _format_docs(docs)
     llm = get_llm()
