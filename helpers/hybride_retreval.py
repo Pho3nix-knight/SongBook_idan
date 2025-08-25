@@ -13,14 +13,13 @@ by the song-per-chunk songbook_chunker.py.
 Run test:
   python -m helpers.hybride_retreval --rebuild --q "על מה כתבתי על שלג?"
 """
-from __future__ import annotations
 import argparse
 import json
 import os
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set, Tuple
 
 from langchain_core.documents import Document
 from langchain_community.retrievers import BM25Retriever
@@ -34,15 +33,15 @@ from helpers.config import CHROMA_DIR, CHUNKS_PATH, OPENAI_API_KEY  # assumes th
 # ---------------------------
 # Globals (built once per process)
 # ---------------------------
-_DOCS_GLOBAL: List[Document] | None = None
-_BM25_GLOBAL: BM25Retriever | None = None
-_VDB_GLOBAL: Chroma | None = None
+_DOCS_GLOBAL: Optional[List[Document]] = None
+_BM25_GLOBAL: Optional[BM25Retriever] = None
+_VDB_GLOBAL: Optional[Chroma] = None
 
 _COLLECTION_NAME = "songbook"
 
-_TITLE_TOKENS: set[str] = set()  # ימולא ב-init
+_TITLE_TOKENS: Set[str] = set()  # ימולא ב-init
 
-def _title_tokens_from_docs(docs: List[Document]) -> set[str]:
+def _title_tokens_from_docs(docs: List[Document]) -> Set[str]:
     toks = set()
     for d in docs:
         t = (d.metadata.get("song_name") or "").lower()
@@ -58,7 +57,7 @@ def _title_precandidates(query: str, limit: int = 12) -> List[Document]:
     # 1) חיתוך לפי טוקנים שמופיעים בכותרות בכלל
     q_title_toks = [t for t in q_toks if t in _TITLE_TOKENS]
 
-    scored: list[tuple[int, Document]] = []
+    scored: List[Tuple[int, Document]] = []
 
     for d in _DOCS_GLOBAL:
         title = (d.metadata.get("song_name") or "").lower()
