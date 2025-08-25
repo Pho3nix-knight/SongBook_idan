@@ -1,16 +1,8 @@
 
-from typing import List, Optional, Any
+from typing import List, Any
 
-from .utils import chunk_text  # local util (inlined below if missing)
-try:
-    # Try to import user's existing retriever if present
-    from helpers.vector_store import retriever as _user_retriever
-except Exception:
-    _user_retriever = None
-
-from ..core.retriever import get_retriever
-from ..core.llm import get_llm
-from ..core.embeddings import get_embeddings
+from helpers.hybride_retreval import hybrid_search
+from core.llm import get_llm
 
 DEFAULT_TOP_K = 5
 
@@ -38,7 +30,13 @@ def _format_docs(docs: List[Any]) -> str:
     for i, d in enumerate(docs, 1):
         content = getattr(d, "page_content", None) or getattr(d, "content", None) or str(d)
         meta = getattr(d, "metadata", {}) or {}
-        src = meta.get("source") or meta.get("path") or meta.get("file") or ""
+        title = meta.get("song_name") or meta.get("source") or meta.get("path") or meta.get("file") or ""
+        month = meta.get("hebrew_month_name") or meta.get("month_name") or ""
+        year = meta.get("year") or ""
+        if month or year:
+            src = f"{title} ({month} {year})".strip()
+        else:
+            src = title
         parts.append(f"[{i}] {src}\n{content}")
     return "\n\n".join(parts)
 
@@ -46,9 +44,7 @@ def summarize_rag(question: str, top_k: int = DEFAULT_TOP_K) -> dict:
     """
     Returns a dict: { 'answer': str, 'contexts': List[str], 'raw_docs': List[Document-like] }
     """
-    retriever = _user_retriever or get_retriever()
-    docs = retriever.get_relevant_documents(question) if hasattr(retriever, "get_relevant_documents") else retriever.retrieve(question)
-    docs = docs[:top_k] if len(docs) > top_k else docs
+    docs = hybrid_search(question, k=top_k)
 
     context_str = _format_docs(docs)
     llm = get_llm()
