@@ -6,20 +6,21 @@ from core.llm import get_llm
 
 DEFAULT_TOP_K = 5
 
-SUMMARY_SYSTEM_PROMPT = """You are a careful summarization assistant for a Songbook QA system.
-- Produce a faithful, concise summary that answers the user's request.
-- Use only the provided context; do not invent facts.
-- Prefer structured bullet points when helpful.
-- If specific song titles/authors are relevant, mention them explicitly.
+SUMMARY_SYSTEM_PROMPT = """אתה מסייע סיכום קפדן עבור מערכת שאלות־תשובות של ספר שירים.
+- הפק סיכום נאמן ומתומצת העונה לבקשת המשתמש.
+- השתמש רק בהקשר שסופק; אל תמציא עובדות.
+- העדף נקודות מסודרות כאשר זה מועיל.
+- אם שמות שירים או מחברים ספציפיים רלוונטיים, ציין אותם במפורש.
+- ענה בעברית בלבד.
 """
 
-SUMMARY_USER_PROMPT = """User request:
+SUMMARY_USER_PROMPT = """בקשת המשתמש:
 {question}
 
-Context (top {k} chunks):
+הקשר (הקטעים העליונים {k}):
 {context}
 
-Write a focused summary that directly addresses the user's request. Keep it accurate and self-contained.
+כתוב סיכום ממוקד העונה ישירות לבקשת המשתמש. שמור על דיוק והסתמך רק על המידע שניתן.
 """
 
 def build_summary_prompt(question: str, context: str, k: int) -> str:
