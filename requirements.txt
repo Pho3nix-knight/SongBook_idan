@@ -1,0 +1,13 @@
+langchain
+openai
+chromadb
+ragas[eval]
+datasets
+tiktoken
+langgraph
+beautifulsoup4
+langchain-community
+langchain-openai
+gradio
+python-dotenv
+rank_bm25
