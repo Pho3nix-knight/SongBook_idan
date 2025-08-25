@@ -1,8 +1,7 @@
 # rag_qa.py
-from __future__ import annotations
 import os
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -48,11 +47,11 @@ prompt = ChatPromptTemplate.from_messages([
 # ---------- Helpers ----------
 _Q_GEN = re.compile(r"(כתוב|תכתוב|המשך|תמשיך|שכתב|שכתבי|ניסוח|נַסֵּח|תקצר|תמצת|סכם|סכמי|summary|rewrite|paraphrase|continue)", re.IGNORECASE)
 
-def _tokenize(q: str) -> list[str]:
+def _tokenize(q: str) -> List[str]:
     return [t for t in re.findall(r"[A-Za-z\u0590-\u05FF]+", q.lower()) if len(t) > 1]
 
 
-def _find_hit_span(text: str, tokens: list[str]) -> Optional[tuple[int, int]]:
+def _find_hit_span(text: str, tokens: List[str]) -> Optional[Tuple[int, int]]:
     low = text.lower()
     for tok in tokens:
         i = low.find(tok)

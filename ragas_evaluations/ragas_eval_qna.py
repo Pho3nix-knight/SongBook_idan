@@ -11,9 +11,6 @@ from helpers.qa_rag import ask
 from helpers.hybride_retreval import hybrid_search, load_jsonl_to_docs
 from helpers.config import CHUNKS_PATH, CHROMA_DIR
 
-from ragas.metrics import faithfulness, context_precision, context_recall
-from ragas.evaluation import evaluate
-from datasets import Dataset
 from helpers.config import RAGAS_QNA_EVALUATION_PATH
 from difflib import get_close_matches
 
@@ -109,6 +106,15 @@ def make_qna_ragas_evaluation(prompt: str):
     print(f"Answer: {answer}")
     print(f"Ground Truth: {ground_truth}\n")
     print(f"Contexts ({len(context)}):\n- " + "\n- ".join(c[:120] + "..." for c in context))
+
+    try:
+        from datasets import Dataset
+        from ragas.metrics import faithfulness, context_precision, context_recall
+        from ragas.evaluation import evaluate
+    except Exception as exc:
+        raise ImportError(
+            "ragas evaluation dependencies are missing or incompatible with this Python version"
+        ) from exc
 
     dataset = Dataset.from_dict({
         "question": [prompt],

@@ -1,13 +1,6 @@
 """Utility to evaluate summaries using RAGAS metrics."""
 
-from __future__ import annotations
-
 from typing import List, Dict
-
-from datasets import Dataset
-from ragas.evaluation import evaluate
-from ragas.metrics import faithfulness
-from langchain_openai import ChatOpenAI
 
 from helpers.config import OPENAI_API_KEY
 
@@ -29,6 +22,16 @@ def evaluate_summary(question: str, answer: str, contexts: List[str]) -> Dict[st
     Dict[str, float]
         Mapping of metric names to their scores.
     """
+
+    try:
+        from datasets import Dataset
+        from ragas.evaluation import evaluate
+        from ragas.metrics import faithfulness
+        from langchain_openai import ChatOpenAI
+    except Exception as exc:
+        raise ImportError(
+            "ragas evaluation dependencies are missing or incompatible with this Python version"
+        ) from exc
 
     llm = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY)
 
