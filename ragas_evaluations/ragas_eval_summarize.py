@@ -45,7 +45,7 @@ def evaluate_summary(
     answer: str,
     contexts: List[str],
     ground_truth: Optional[str] = None,
-) -> Dict[str, float]:
+) -> Optional[Dict[str, float]]:
     """Evaluate a generated summary against its source context.
 
     Parameters
@@ -57,23 +57,28 @@ def evaluate_summary(
     contexts: List[str]
         Context passages used to create the summary.
     ground_truth: Optional[str]
-        Reference summary text. When provided, answer relevancy is also scored.
+        Reference summary text. When provided, answer correctness is also scored.
 
     Returns
     -------
-    Dict[str, float]
-        Mapping of metric names to their scores.
+    Optional[Dict[str, float]]
+        Mapping of metric names to their scores, or ``None`` if the evaluation
+        dependencies are unavailable.
     """
 
     try:
         from datasets import Dataset
         from ragas.evaluation import evaluate
-        from ragas.metrics import faithfulness, answer_relevancy
+        from ragas.metrics import faithfulness, answer_correctness
         from langchain_openai import ChatOpenAI
     except Exception as exc:
-        raise ImportError(
-            "ragas evaluation dependencies are missing or incompatible with this Python version"
-        ) from exc
+        # Optional evaluation: gracefully skip when ragas or its dependencies
+        # are not installed (e.g. on Python < 3.10 without ``eval_type_backport``)
+        print(
+            "RAGAS evaluation skipped: dependencies are missing or incompatible with this Python version",
+            exc,
+        )
+        return None
 
     llm = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY)
 
@@ -85,14 +90,14 @@ def evaluate_summary(
     metrics = [faithfulness]
     if ground_truth is not None:
         data["ground_truth"] = [ground_truth]
-        metrics.append(answer_relevancy)
+        metrics.append(answer_correctness)
 
     dataset = Dataset.from_dict(data)
 
     results = evaluate(dataset, metrics=metrics, llm=llm)
 
     scores = {"faithfulness": float(results["faithfulness"][0])}
-    if ground_truth is not None and "answer_relevancy" in results:
-        scores["answer_relevancy"] = float(results["answer_relevancy"][0])
+    if ground_truth is not None and "answer_correctness" in results:
+        scores["answer_correctness"] = float(results["answer_correctness"][0])
     return scores
 
