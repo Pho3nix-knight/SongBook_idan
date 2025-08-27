@@ -1,11 +1,15 @@
 
 from typing import List, Dict, Optional
+import sys
+
 
 def evaluate_with_ragas(question: str, answer: str, contexts: List[str], ground_truth: Optional[str] = None) -> Dict:
     """
     Runs a small RAGAS evaluation on a single (q, a, contexts[, ground_truth]) sample.
     Returns a dict of metrics.
     """
+    if sys.version_info < (3, 10):
+        return {"error": "RAGAS evaluation requires Python 3.10 or higher"}
     try:
         from ragas import evaluate
         from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall

@@ -108,13 +108,17 @@ def make_qna_ragas_evaluation(prompt: str):
     print(f"Contexts ({len(context)}):\n- " + "\n- ".join(c[:120] + "..." for c in context))
 
     try:
+        if sys.version_info < (3, 10):
+            raise RuntimeError("Python 3.10+ required for ragas evaluation")
         from datasets import Dataset
         from ragas.metrics import faithfulness, context_precision, context_recall
         from ragas.evaluation import evaluate
     except Exception as exc:
-        raise ImportError(
-            "ragas evaluation dependencies are missing or incompatible with this Python version"
-        ) from exc
+        print(
+            "RAGAS evaluation skipped: dependencies are missing or incompatible with this Python version",
+            exc,
+        )
+        return answer
 
     dataset = Dataset.from_dict({
         "question": [prompt],

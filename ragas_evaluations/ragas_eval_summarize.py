@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional
 from difflib import get_close_matches
 import os
+import sys
 
 from helpers.config import OPENAI_API_KEY
 
@@ -66,6 +67,10 @@ def evaluate_summary(
         dependencies are unavailable.
     """
 
+    if sys.version_info < (3, 10):
+        print("RAGAS evaluation requires Python 3.10 or higher. Skipping.")
+        return None
+
     try:
         from datasets import Dataset
         from ragas.evaluation import evaluate
@@ -73,7 +78,7 @@ def evaluate_summary(
         from langchain_openai import ChatOpenAI
     except Exception as exc:
         # Optional evaluation: gracefully skip when ragas or its dependencies
-        # are not installed (e.g. on Python < 3.10 without ``eval_type_backport``)
+        # are not installed
         print(
             "RAGAS evaluation skipped: dependencies are missing or incompatible with this Python version",
             exc,
