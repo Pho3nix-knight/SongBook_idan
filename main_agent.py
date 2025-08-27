@@ -1,4 +1,3 @@
-import os
 import gradio as gr
 
 from helpers.qa_rag import ask
@@ -18,7 +17,7 @@ def router_agent(operation: str, prompt: str):
         _last_response.update({"question": prompt, "answer": ans, "contexts": [], "metrics": None})
         return ans
     elif operation == "summarize":
-        out = summarize_rag(prompt, top_k=int(os.getenv("TOP_K", "5")))
+        out = summarize_rag(prompt)
         metrics = evaluate_summary(prompt, out["answer"], out["contexts"])
         _last_response.update({"question": prompt, "answer": out["answer"], "contexts": out["contexts"], "metrics": metrics})
         return out["answer"] + f"\n\n**RAGAS**\nFaithfulness: {metrics['faithfulness']:.3f}"

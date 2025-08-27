@@ -29,7 +29,7 @@ def test_summarize_rag_filters_to_song(monkeypatch):
     monkeypatch.setattr("agents.summary_agent.hybrid_search", fake_hybrid_search)
     monkeypatch.setattr("agents.summary_agent.get_llm", lambda: DummyLLM())
 
-    result = summarize_rag('מה המסר בשיר "Imagine"?', top_k=3)
+    result = summarize_rag('מה המסר בשיר "Imagine"?')
 
     assert calls['song_name'] == "Imagine"
     assert all(doc.metadata["song_name"] == "Imagine" for doc in result["raw_docs"])
