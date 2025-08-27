@@ -45,7 +45,7 @@ def evaluate_summary(
     answer: str,
     contexts: List[str],
     ground_truth: Optional[str] = None,
-) -> Dict[str, float]:
+) -> Optional[Dict[str, float]]:
     """Evaluate a generated summary against its source context.
 
     Parameters
@@ -61,8 +61,9 @@ def evaluate_summary(
 
     Returns
     -------
-    Dict[str, float]
-        Mapping of metric names to their scores.
+    Optional[Dict[str, float]]
+        Mapping of metric names to their scores, or ``None`` if the evaluation
+        dependencies are unavailable.
     """
 
     try:
@@ -71,9 +72,13 @@ def evaluate_summary(
         from ragas.metrics import faithfulness, answer_relevancy
         from langchain_openai import ChatOpenAI
     except Exception as exc:
-        raise ImportError(
-            "ragas evaluation dependencies are missing or incompatible with this Python version"
-        ) from exc
+        # Optional evaluation: gracefully skip when ragas or its dependencies
+        # are not installed (e.g. on Python < 3.10 without ``eval_type_backport``)
+        print(
+            "RAGAS evaluation skipped: dependencies are missing or incompatible with this Python version",
+            exc,
+        )
+        return None
 
     llm = ChatOpenAI(temperature=0, api_key=OPENAI_API_KEY)
 

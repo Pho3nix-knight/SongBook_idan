@@ -20,7 +20,11 @@ def router_agent(operation: str, prompt: str):
         out = summarize_rag(prompt)
         metrics = evaluate_summary(prompt, out["answer"], out["contexts"])
         _last_response.update({"question": prompt, "answer": out["answer"], "contexts": out["contexts"], "metrics": metrics})
-        return out["answer"] + f"\n\n**RAGAS**\nFaithfulness: {metrics['faithfulness']:.3f}"
+        if metrics is None:
+            metrics_text = "\n\n**RAGAS**\nEvaluation unavailable."
+        else:
+            metrics_text = f"\n\n**RAGAS**\nFaithfulness: {metrics['faithfulness']:.3f}"
+        return out["answer"] + metrics_text
     else:
         return "Unknown operation selected."
     
