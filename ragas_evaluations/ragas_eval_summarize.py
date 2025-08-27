@@ -57,7 +57,7 @@ def evaluate_summary(
     contexts: List[str]
         Context passages used to create the summary.
     ground_truth: Optional[str]
-        Reference summary text. When provided, answer relevancy is also scored.
+        Reference summary text. When provided, answer correctness is also scored.
 
     Returns
     -------
@@ -69,7 +69,7 @@ def evaluate_summary(
     try:
         from datasets import Dataset
         from ragas.evaluation import evaluate
-        from ragas.metrics import faithfulness, answer_relevancy
+        from ragas.metrics import faithfulness, answer_correctness
         from langchain_openai import ChatOpenAI
     except Exception as exc:
         # Optional evaluation: gracefully skip when ragas or its dependencies
@@ -90,14 +90,14 @@ def evaluate_summary(
     metrics = [faithfulness]
     if ground_truth is not None:
         data["ground_truth"] = [ground_truth]
-        metrics.append(answer_relevancy)
+        metrics.append(answer_correctness)
 
     dataset = Dataset.from_dict(data)
 
     results = evaluate(dataset, metrics=metrics, llm=llm)
 
     scores = {"faithfulness": float(results["faithfulness"][0])}
-    if ground_truth is not None and "answer_relevancy" in results:
-        scores["answer_relevancy"] = float(results["answer_relevancy"][0])
+    if ground_truth is not None and "answer_correctness" in results:
+        scores["answer_correctness"] = float(results["answer_correctness"][0])
     return scores
 

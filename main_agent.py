@@ -2,7 +2,10 @@ import gradio as gr
 
 from helpers.qa_rag import ask
 from agents.summary_agent import summarize_rag
-from ragas_evaluations.ragas_eval_summarize import evaluate_summary
+from ragas_evaluations.ragas_eval_summarize import (
+    evaluate_summary,
+    load_summary_ground_truth,
+)
 
 def ask_qa_rag(prompt: str):
     answer = ask(prompt)
@@ -18,17 +21,27 @@ def router_agent(operation: str, prompt: str):
         return ans
     elif operation == "summarize":
         out = summarize_rag(prompt)
-        metrics = evaluate_summary(prompt, out["answer"], out["contexts"])
+        ground_truth = None
+        if out.get("raw_docs"):
+            first = next((d for d in out["raw_docs"] if getattr(d, "metadata", {}).get("song_name")), None)
+            if first:
+                try:
+                    ground_truth = load_summary_ground_truth(first.metadata["song_name"])
+                except FileNotFoundError:
+                    ground_truth = None
+        metrics = evaluate_summary(prompt, out["answer"], out["contexts"], ground_truth)
         _last_response.update({"question": prompt, "answer": out["answer"], "contexts": out["contexts"], "metrics": metrics})
         if metrics is None:
             metrics_text = "\n\n**RAGAS**\nEvaluation unavailable."
         else:
-            metrics_text = f"\n\n**RAGAS**\nFaithfulness: {metrics['faithfulness']:.3f}"
+            lines = [f"Faithfulness: {metrics['faithfulness']:.3f}"]
+            if "answer_correctness" in metrics:
+                lines.append(f"Answer Correctness: {metrics['answer_correctness']:.3f}")
+            metrics_text = "\n\n**RAGAS**\n" + "\n".join(lines)
         return out["answer"] + metrics_text
     else:
         return "Unknown operation selected."
     
-
 
 def main():
     with gr.Blocks(
