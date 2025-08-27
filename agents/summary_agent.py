@@ -5,8 +5,6 @@ import re
 from helpers.hybride_retreval import hybrid_search
 from core.llm import get_llm
 
-DEFAULT_TOP_K = 5
-
 SUMMARY_SYSTEM_PROMPT = """אתה מסייע סיכום קפדן עבור מערכת שאלות־תשובות של ספר שירים.
 - הפק סיכום נאמן ומתומצת העונה לבקשת המשתמש.
 - השתמש רק בהקשר שסופק; אל תמציא עובדות.
@@ -63,7 +61,7 @@ def _extract_song_names(question: str) -> List[str]:
             seen.append(n)
     return seen
 
-def summarize_rag(question: str, top_k: int = DEFAULT_TOP_K) -> dict:
+def summarize_rag(question: str) -> dict:
     """
     Returns a dict: { 'answer': str, 'contexts': List[str], 'raw_docs': List[Document-like] }
     """
@@ -72,7 +70,7 @@ def summarize_rag(question: str, top_k: int = DEFAULT_TOP_K) -> dict:
     docs: List[Any] = []
     if song_names:
         for name in song_names:
-            docs.extend(hybrid_search(question, k=top_k, song_name=name))
+            docs.extend(hybrid_search(question, song_name=name))
 
         # Deduplicate while preserving order
         seen_keys = set()
@@ -83,9 +81,9 @@ def summarize_rag(question: str, top_k: int = DEFAULT_TOP_K) -> dict:
             if key not in seen_keys:
                 seen_keys.add(key)
                 deduped.append(d)
-        docs = deduped[:top_k]
+        docs = deduped
     else:
-        docs = hybrid_search(question, k=top_k)
+        docs = hybrid_search(question)
 
     context_str = _format_docs(docs)
     llm = get_llm()
