@@ -43,7 +43,6 @@ def router_agent(operation: str, prompt: str):
         return "Unknown operation selected."
     
 
-
 def main():
     with gr.Blocks(
         title="Songbook RAG",
